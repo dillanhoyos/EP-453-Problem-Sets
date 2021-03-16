@@ -25,14 +25,14 @@ class Weather {
           
     }
     
-    convenience init(yesterday: String){
-        self.init(low: 60, high: 80, prec: 20, wind: 10)
-    }
+    
  
     var today = Weather(low: 64, high: 76, prec: 10, wind: 11)
+    var yesterday = Weather(low: 60, high: 70, prec: 1, wind: 1)
+    
    
     
-    
+    var dif = today - yesterday
     
     
    

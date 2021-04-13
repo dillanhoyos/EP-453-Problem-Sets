@@ -22,15 +22,6 @@ struct RecorderView: View{
     var body: some View{
         NavigationView{
             VStack(){
-                NavigationLink(
-                    
-                    destination: LibraryView()){
-                    Text("RecordedSounds ->")
-                }
-             
-                  
-                    
-                
                     Spacer()
                     //Recording Button
                     Button(action:{
@@ -77,7 +68,11 @@ struct RecorderView: View{
                     }
                     
                     .pickerStyle(SegmentedPickerStyle())
+                NavigationLink(
                     
+                    destination: LibraryView()){
+                    Text("RecordedSounds ->")
+                }
                 }
          
         }

@@ -62,6 +62,8 @@ struct MeterView: View {
                 Rectangle()
                     .fill(Color.blue)
                     .frame(height: geometry.size.height - (geometry.size.height * (1.0 - CGFloat(amplitude))))
+                 
+                    
                     .offset(x: 0, y: geometry.size.height * (1.0 - CGFloat(amplitude)))
                     .animation(.easeOut(duration: 0.1))
             }

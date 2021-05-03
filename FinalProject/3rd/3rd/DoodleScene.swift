@@ -7,179 +7,212 @@
 
 import SpriteKit
 import SwiftUI
+import AVFoundation
 
 
 class DoodleScene: SKScene, SKPhysicsContactDelegate{
   
-    
+    var rightwall = false
+    var leftwall = false
+    //ScoreManagment
+    let scoreLabel = SKLabelNode()
+    var score = 0
+    var point = 600.0
+
+
+     
     
     let rectangleSize:CGRect = CGRect(x: 1, y: 1, width: 300, height: 90)
     let sprite = SKSpriteNode(imageNamed: "Video-Game-Character-Design-Collection-002.jpeg")
+    var background = SKSpriteNode(imageNamed: "Sky.png")
     
-//    let Point1:CGPoint = CGPoint(x: 900, y: 10000)
-//    let Point2:CGPoint = CGPoint(x: 900, y: -500)
-//    let Point3:CGPoint = CGPoint(x: 0,y: 10000)
-//    let Point4:CGPoint = CGPoint(x: 0,  y: -500)
-//    let path:CGPath = CGPath(rect: self , transform: <#T##UnsafePointer<CGAffineTransform>?#>)
-//
-//
-   
-    
+
     let circleRadius:CGFloat = 20
- 
     let conerRadius:CGFloat = 2
     var isTouchingBall = false
     var isBallMoving = true
+
+    
+    var isTouchingleft = false
+    var isTouchingRight = false
     var touchedBall:SKSpriteNode!
     var touchLocation:CGPoint!
-   
-  
-//    var audioPlayer = Player()
-    var count = 1
+    
     //cameranode
     let cameraNode = SKCameraNode()
 //    let isPlayerMoving = true
     
-    let columns = 3
-    let rows = 6
-    var bar = [SKShapeNode]()
+    let columns = 10
+    let rows = 10
+    var bar = [SKSpriteNode]()
     //ball declaration
     
 
     //Bit mask basedon categories of Objects
-    let ballCategory: UInt32 = 0x1 << 0
-    let barCategory: UInt32 = 0x1 << 1
+//    let ballCategory: UInt32 = 0x1 << 0
+//    let barCategory: UInt32 = 0x1 << 1
+    //audioPlayer
+    let audioPlayer = Player()
+    var count = 1
+    
+   
     
     override func didMove(to view: SKView) {
         
+        
+        addChild(background)
+
+        self.physicsWorld.contactDelegate = self;
+        self.physicsWorld.gravity = CGVector(dx: 0, dy: 0)
+        
+        
+        
         self.camera = cameraNode
+        //score labeling
         
-//        let border = SKPhysicsBody(edgeChainFrom: CGPath)
-//        border.friction = 1
-//        border.restitution = 1
-//        border.pinned = true
-//        self.physicsBody = border
-//
-//        let border1 = SKPhysicsBody(edgeFrom: Point2, to: Point1)
-//        border1.friction = 1
-//        border1.restitution = 1
-//        border1.pinned = true
-//        self.physicsBody = border1
-        //ball
-      
-        /// Camera
+        scoreLabel.position = CGPoint(x: 300, y: 500)
+        scoreLabel.fontColor = .white
+        scoreLabel.fontSize = 150
+        scoreLabel.text = String(score)
+        cameraNode.addChild(scoreLabel)
         
-//        scene!.addChild(cameraNode)
-//        scene!.camera = cameraNode
-//
+        self.physicsWorld.gravity = CGVector(dx: 0, dy: -6)
+        self.physicsWorld.contactDelegate = self
+
         cameraNode.position = CGPoint(x: 420, y: 500)
        
-//
-//        createBar(location: CGPoint(x: self.frame.midX/random(min: 0, max: 5), y: self.frame.midY/random(min: 0, max: 1)))
-       
-       
-        sprite.name =  "ball"
+        sprite.name =  "sprite"
         sprite.size = CGSize(width: 75, height: 75)
         sprite.position = CGPoint(x: 250, y: 500)
-
-
         sprite.physicsBody = SKPhysicsBody(circleOfRadius: circleRadius)
         sprite.physicsBody?.allowsRotation = false
         sprite.physicsBody?.friction = 0
         sprite.physicsBody?.restitution = 1
         sprite.physicsBody?.angularDamping = 0
         sprite.physicsBody?.linearDamping = 0
-        sprite.physicsBody?.mass = 0.5
- 
+        sprite.physicsBody?.mass = 0.0001
+        sprite.physicsBody?.categoryBitMask = PhysicsCategory.hero
+//        sprite.physicsBody?.contactTestBitMask = PhysicsCategory.hero | PhysicsCategory.step
+        sprite.physicsBody?.collisionBitMask = PhysicsCategory.step
+        sprite.physicsBody?.contactTestBitMask = PhysicsCategory.step
         addChild(sprite)
-        sprite.physicsBody?.categoryBitMask = ballCategory
-        sprite.physicsBody?.contactTestBitMask = ballCategory | barCategory
-       ////
-////
+       
+        
+        sprite.physicsBody?.categoryBitMask = PhysicsCategory.ballCategory
+        sprite.physicsBody?.contactTestBitMask = PhysicsCategory.ballCategory | PhysicsCategory.borderCategory
+        audioPlayer.linkSound(ball: sprite.name!)
+         
+   
         createwalls()
-//        createBall(location: CGPoint(x: self.frame.midX, y: self.frame.midY/random(min: 1, max: 2)))
-        addRect()
+        add()
+
+      
+    }
+    
+// Physics Categories
+    struct PhysicsCategory{
+        static var None: UInt32 = 0;
+        static var step: UInt32 = 0b1;
+        static var hero: UInt32 = 0b10;
+        static var All: UInt32 = UInt32.max;
+        static var ballCategory: UInt32 = 0x1 << 0
+        static var borderCategory: UInt32 = 0x1 << 1
+        
+        
     }
     func didBegin(_ contact: SKPhysicsContact) {
        
        let bodyA = contact.bodyA.node?.name
        let bodyB = contact.bodyB.node?.name
+        
+    
+       
 
-       if bodyA != nil && (bodyA?.contains("ball"))!{
+       if bodyA != nil && (bodyA?.contains("sprite"))!{
        print("bodyACollided")
        
-     
+        audioPlayer.playSound(ball: bodyA!)
+       
            
        }
    
-       if bodyB != nil && (bodyB?.contains("ball"))!{
+       if bodyB != nil && (bodyB?.contains("sprite"))!{
        print("bodyBcollided")
-          
-           
+        audioPlayer.playSound(ball: bodyB!)
+        
+      
+        sprite.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 0.01))
+        print("score")
+        score += 1
+        scoreLabel.text = String(score)
+       
        
        }
    }
-   
+    func dieAndRestart(){
+                print("Dead")
+                sprite.physicsBody?.velocity.dy = 0
+                sprite.removeFromParent()
+                
+                scoreLabel.position = cameraNode.position
+                removeChildren(in: bar)
+                sprite.position = CGPoint(x: 450, y: 500)
+                sprite.physicsBody?.angularVelocity = 0
+                sprite.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
+                addChild(sprite)
+                sprite.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 0.1))
+                add()
+             
+
+                
+       
+    }
+//    func createbar(){
+//        for bars in bar{
+//
+//        }
+//    }
+//
     
     func createwalls(){
         let leftWall = SKSpriteNode(color: UIColor.brown, size: CGSize(width: 50, height: 100000))
+        leftWall.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 50, height: 10000000))
+        leftWall.physicsBody?.isDynamic = true
+        leftWall.physicsBody?.pinned = true
+       
         leftWall.position = CGPoint(x: 10, y: 0)
-        leftWall.physicsBody = SKPhysicsBody(rectangleOf: leftWall.size)
-        leftWall.physicsBody!.isDynamic = false
+
+        leftWall.name = "leftWall"
+ 
         self.addChild(leftWall)
 
         let rightWall = SKSpriteNode(color: UIColor.brown, size: CGSize(width: 50, height: 100000))
+        rightWall.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 50, height: 10000000))
+        rightWall.physicsBody?.pinned = true
+        rightWall.physicsBody?.restitution = 1
         rightWall.position = CGPoint(x: 825, y: 0)
-        rightWall.physicsBody = SKPhysicsBody(rectangleOf: rightWall.size)
-        rightWall.physicsBody!.isDynamic = false
+        rightWall.name = "rightwall"
+  
         self.addChild(rightWall)
-//    2t
-        
-//        let touchscreen = SKShapeNode(rectOf: screen)
-//
-//        touchscreen.physicsBody?.pinned = true
-//        touchscreen.physicsBody?.isDynamic = false
-//        touchscreen.alpha = 0
-//        touchscreen.name = "pad"
+       
     }
-//    func createBall(location: CGPoint){
-//        let ball = SKShapeNode(circleOfRadius: circleRadius)
-//
-//        ball.position = location
-//        ball.name =  "ball"
-//        ball.strokeColor = SKColor.white
-//        ball.glowWidth = 4.0
-//        ball.fillColor = SKColor.init(red: random(min: 0, max: 1), green: random(min: 0, max: 1), blue: random(min: 0, max: 1), alpha: 1)
-//
-//        ball.physicsBody = SKPhysicsBody(circleOfRadius: circleRadius)
-//        ball.physicsBody?.allowsRotation = false
-//        ball.physicsBody?.friction = 0
-//        ball.physicsBody?.restitution = 1
-//        ball.physicsBody?.angularDamping = 0
-//        ball.physicsBody?.linearDamping = 0
-//        ball.physicsBody?.mass = 0.00001
-//
-//
-//        self.addChild(ball)
-//        ball.physicsBody?.categoryBitMask = ballCategory
-//        ball.physicsBody?.contactTestBitMask = ballCategory | barCategory
-////
-//    }
-    func addRect(){
-        
-        
+
+    func add(){
         let recof = CGSize(width: 90, height: 20)
-        var y:CGFloat = 0.0
-        let yOffset = CGFloat(rows) * recof.height
-        let xOffset = CGFloat(columns) * recof.width
+               let rocof =  CGSize(width: 120, height: 20)
+               var y:CGFloat = 0.0
+               var increase = CGFloat(400.0)
+               let yOffset = CGFloat(rows) * recof.height
+               let xOffset = CGFloat(columns) * recof.width
+               var x:CGFloat = 0.0
+        
         for row in 0..<rows{
-            var x:CGFloat = 0.0
             for column in 0..<columns{
-                let rectangle = SKShapeNode(rectOf: recof, cornerRadius: conerRadius)
-                rectangle.position = CGPoint(x: x-xOffset+random(min: -180, max: 180) + 550, y: y+yOffset+random(min: -400, max: 180) + 400)
+                let rectangle = SKSpriteNode(imageNamed: "GrassJoinHillRight.png")
+                rectangle.size = recof
+                rectangle.position = CGPoint(x: x-xOffset+random(min: -220, max: 400) + 1200, y: y+yOffset+random(min: -600, max: 0)+CGFloat(increase))
                 rectangle.name = "Rect"
-                rectangle.fillColor = SKColor.init(red: random(min: 0, max: 1), green: random(min: 0, max: 1), blue: random(min: 0, max: 1), alpha: 1)
-                rectangle.physicsBody = SKPhysicsBody(rectangleOf: recof )
+                rectangle.physicsBody = SKPhysicsBody(rectangleOf: rocof)
                 rectangle.physicsBody?.affectedByGravity = false
                 rectangle.physicsBody?.friction = 0
 //                rectangle.physicsBody?.
@@ -188,101 +221,145 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
                 rectangle.physicsBody?.angularDamping = 0
                 rectangle.physicsBody?.allowsRotation = false
                 rectangle.physicsBody?.pinned = true
+                rectangle.physicsBody?.categoryBitMask = PhysicsCategory.borderCategory
+                rectangle.physicsBody?.categoryBitMask = PhysicsCategory.step
+                rectangle.physicsBody?.collisionBitMask = PhysicsCategory.None
+                rectangle.physicsBody?.contactTestBitMask = PhysicsCategory.hero
+            
+       
+                
                 //add to scene
                 self.addChild(rectangle)
-                x += 1.6 * recof.width
                
                 
+                bar.append(rectangle)
+                increase += CGFloat(100)
             }
-            y += 2 * recof.height
+           
         }
-    
+        
     }
- 
-//    func createBar(location: CGPoint){
-//
-//
-//        let recof = CGSize(width: 100, height: 30)
-//        let rectangle = SKShapeNode(rectOf: recof, cornerRadius: conerRadius)
-//SKSpriteNode
-//        rectangle.position = location
-//        rectangle.name = "Rect" + String(count)
-//        count += 1
-//        rectangle.strokeColor = SKColor.white
-//        rectangle.fillColor = SKColor.init(red: random(min: 0, max: 1), green: random(min: 0, max: 1), blue: random(min: 0, max: 1), alpha: 1)
-//
-//        rectangle.physicsBody = SKPhysicsBody(rectangleOf: recof )
-//        rectangle.physicsBody?.affectedByGravity = false
-//        rectangle.physicsBody?.friction = 0
-//        rectangle.physicsBody?.restitution = 1
-//        rectangle.physicsBody?.linearDamping = 0
-//        rectangle.physicsBody?.angularDamping = 0
-//        rectangle.physicsBody?.allowsRotation = false
-//        rectangle.physicsBody?.pinned = true
-//        rectangle.physicsBody?.usesPreciseCollisionDetection = false
-//
-//        self.physicsBody?.categoryBitMask = barCategory
-//        self.physicsWorld.contactDelegate = self
-//
-//        //add
-//
-//        self.addChild(rectangle)
-//
-////        audioPlayer.linkSound(ball: ball.name!)
-////
-////        rectangle.physicsBody?.applyImpulse(CGVector(dx: random(min: -100, max: 100), dy: 0))
-//
-//    }
-//
-    
-    
+
    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
      for touch in touches{
-         let location = touch.location(in: self)
-    
-         if let body = self.physicsWorld.body(at: location){
-             isBallMoving = true
-             if body.node?.name == "ball"{
-                 isTouchingBall = true
+                 let location = touch.location(in: self)
                 
-                 touchedBall = body.node as? SKSpriteNode
-                 touchLocation = location
-                 }
             
+                 if let body = self.physicsWorld.body(at: location){
+                     isBallMoving = true
+                     if body.node?.name == "sprite"{
+                         isTouchingBall = true
+                        
+                         touchedBall = body.node as? SKSpriteNode
+                         touchLocation = location
+                         }
+                    
              
              }
-         }
+                if location.x > self.frame.midX{
+                    isTouchingRight = true
+                    
+                }
+                if location.x < self.frame.midX{
+                    isTouchingleft = true
+                }
+            
+                
+//        if sprite.position.y == self.frame.midY{
+//
+//            Spawn = true
+//            here += 1000
+//        }else {
+//            Spawn = false
+//        }
+        
+        
      }
+}
 
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         
-        if isTouchingBall{
-            for touch in touches{
-                touchLocation = touch.location(in: self)
-                
-            }
-        }
-    }
+                    if isTouchingBall{
+                        for touch in touches{
+                            touchLocation = touch.location(in: self)
+                            
+                        }
+                    }
+                }
 
     
     override func update(_ currentTime: TimeInterval) {
+       
+
         
-        if isBallMoving{
-            cameraNode.position.y = sprite.position.y
-        }
+                if isTouchingleft{
+                        sprite.physicsBody?.applyImpulse(CGVector(dx: -0.01, dy: 0))
+                        isTouchingleft = false
+                        
+                }
+                if isTouchingRight{
+                        sprite.physicsBody?.applyImpulse(CGVector(dx: 0.01, dy: 0))
+                        isTouchingRight = false
+                }
+                
+                let deadbarrier = sprite.position.y-(sprite.position.y+100)
+               //cameraUpdate
+                if isBallMoving{
+                        if sprite.position.y < deadbarrier{
+                       
+                            dieAndRestart()
+                        }
+                        else{
+                            cameraNode.position.y = sprite.position.y
+                            background.position = cameraNode.position
+                            print("\(sprite.position.y)")
+                        }
+                       
+                    }
      
-        if isTouchingBall{
-            
-            let dt:CGFloat = 1.0 / 60.0
-            let distance = CGVector(dx: touchLocation.x-touchedBall.position.x, dy: touchLocation.y-touchedBall.position.y)
-            let velocity = CGVector(dx: distance.dx/dt, dy: distance.dy/dt)
-            touchedBall.physicsBody?.velocity = velocity
+                if isTouchingBall{
+                    
+                        let dt:CGFloat = 1.0 / 60.0
+                        let distance = CGVector(dx: touchLocation.x-touchedBall.position.x, dy: touchLocation.y-touchedBall.position.y)
+                        let velocity = CGVector(dx: distance.dx/dt, dy: distance.dy/dt)
+                        touchedBall.physicsBody?.velocity = velocity
+                        
+                    }
+        //BitMasking Collision Update
+                if let body = sprite.physicsBody{
+                    let dy = body.velocity.dy
+                        if dy > 0 {
+                            //prevent collision if the hero is jumping
+                            body.collisionBitMask &= ~PhysicsCategory.step
+                            
+                        }
+                        else{
+                            //allow collision if the hero is fallling
+                            body.collisionBitMask |= PhysicsCategory.step
+                           
+                        
+                            
+                            
+                        }
+                }
+     
+                    var here = CGFloat(1000)
+                if sprite.position.y == here {
+                    //Delete array
+                    removeChildren(in: bar)
+                    bar.removeAll()
+                    here += 1000
+                    //rectangle Spawn
+                    add()
+                    print ("we are going")
+                }
+             
           
-         
-           
-        }
         
+    
+    
+      
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -304,6 +381,13 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
         return CGFloat(Float(arc4random()) / Float(UINT32_MAX)) * (max - min) + min
     }
     
+    func start(){
+           audioPlayer.start()
+       }
+       
+       func stop(){
+           audioPlayer.stop()
+       }
     
 }
 

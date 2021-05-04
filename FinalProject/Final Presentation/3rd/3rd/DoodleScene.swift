@@ -45,12 +45,7 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
     let columns = 10
     let rows = 10
     var bar = [SKSpriteNode]()
-    //ball declaration
-    
 
-    //Bit mask basedon categories of Objects
-//    let ballCategory: UInt32 = 0x1 << 0
-//    let barCategory: UInt32 = 0x1 << 1
     //audioPlayer
     let audioPlayer = Player()
     var count = 1
@@ -149,6 +144,8 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
        
        }
    }
+    
+    
     func dieAndRestart(){
                 print("Dead")
                 sprite.physicsBody?.velocity.dy = 0
@@ -167,12 +164,7 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
                 
        
     }
-//    func createbar(){
-//        for bars in bar{
-//
-//        }
-//    }
-//
+//create borders
     
     func createwalls(){
         let leftWall = SKSpriteNode(color: UIColor.brown, size: CGSize(width: 50, height: 100000))
@@ -196,6 +188,8 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
         self.addChild(rightWall)
        
     }
+    
+    //add rectangles
 
     func add(){
         let recof = CGSize(width: 90, height: 20)
@@ -239,6 +233,8 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
         }
         
     }
+    
+    //Controls
 
    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
      for touch in touches{
@@ -264,14 +260,7 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
                     isTouchingleft = true
                 }
             
-                
-//        if sprite.position.y == self.frame.midY{
-//
-//            Spawn = true
-//            here += 1000
-//        }else {
-//            Spawn = false
-//        }
+    
         
         
      }
@@ -292,19 +281,22 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
     override func update(_ currentTime: TimeInterval) {
        
 
-        
+        //left impulse
                 if isTouchingleft{
                         sprite.physicsBody?.applyImpulse(CGVector(dx: -0.01, dy: 0))
                         isTouchingleft = false
                         
                 }
+        //Right Impulse
                 if isTouchingRight{
                         sprite.physicsBody?.applyImpulse(CGVector(dx: 0.01, dy: 0))
                         isTouchingRight = false
                 }
                 
                 let deadbarrier = sprite.position.y-(sprite.position.y+100)
+        
                //cameraUpdate
+        //death barrier
                 if isBallMoving{
                         if sprite.position.y < deadbarrier{
                        
@@ -317,7 +309,7 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
                         }
                        
                     }
-     
+     //Drag object
                 if isTouchingBall{
                     
                         let dt:CGFloat = 1.0 / 60.0
@@ -326,6 +318,7 @@ class DoodleScene: SKScene, SKPhysicsContactDelegate{
                         touchedBall.physicsBody?.velocity = velocity
                         
                     }
+        
         //BitMasking Collision Update
                 if let body = sprite.physicsBody{
                     let dy = body.velocity.dy
